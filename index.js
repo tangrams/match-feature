@@ -1,29 +1,7 @@
-/*
-
- AND
-function () { return (feature.kind != 'ocean' && feature.kind != 'riverbank') && zoom >= 14; }
-
-{ zoom: 14, not: { kind: [ocean, riverbank] } }
-
-OR 
-
-function () { return ( zoom >= 16) || (zoom >= 15 && feature.height > 20) }
-
-{ any: [{ zoom: { min: 16 } }, { zoom: { min: 15 }, height: { min: 20 } }]}
-
-  Zoom-specific handling
- Minimum thresholds are INCLUSIVE, maximum thresholds are EXCLUSIVE
- The following syntax forms are accepted:
-    filter: { scene.zoom: 14 }                  # zoom >= 14
-    filter: { scene.zoom: { max: 18 }           # zoom < 18
-    filter: { scene.zoom: { min: 14, max: 18 }  # 14 <= zoom < 18
-    filter: { scene.zoom: [14, 18] }            # 14 <= zoom < 18
-*/
-
 
 var whiteList = ['any', 'not', 'all'];
 
-function matchFeatureObject(filter, context) {
+function matchFeatureObject(filter, context, parent) {
     var feature = context.feature;
 
     for (var key in filter) {
@@ -40,10 +18,22 @@ function matchFeatureObject(filter, context) {
                 }
             } else if (Array.isArray(filter[key])) {
                 return filter[key].indexOf(feature.properties[key]) >= 0;
+            } else if (type === 'object') {
+                return matchFeatureObject(filter[key], context, key);
             }
-
         } else if (whiteList.indexOf(key) >= 0) {
-            // handle any, not, all
+            if (parent !== undefined) {
+                switch (key) {
+                case 'not':
+                    return 'not';
+                case 'any':
+                    return 'any';
+                case 'all':
+                    return 'all';
+                }                
+            } else {
+                throw new Error();
+            }
         } else {
             return false; // should we throw?
         }
@@ -61,7 +51,7 @@ exports.buildFilter = function (filter) {
     case '[object Undefined]':
         return function () { return true; };
     default:
-        return filter;
+        return function () { return true; };
     }
 };
 

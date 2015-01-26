@@ -86,6 +86,30 @@ describe('.match(filter, context)', function () {
         });
     });
 
+    describe('when the filter property is an object', function () {
+        var context = {
+            feature: {
+                properties: {
+                    kind: 'highway'
+                }
+            }
+        };
+
+        describe('negation with single value', function () {
+            var subject = { kind: { not: 'highway'}};
+
+            it('returns false when the value does match', function () {
+                expect(match(subject)(context)).to.be.false();
+            });
+        });
+
+        describe('negation with many values', function () {
+            var subject = { kind: { not: ['motorway', 'highway']}};
+        });
+
+    });
+
+
     describe('when the filter value is a boolean', function () {
         var context = {
             feature: {
