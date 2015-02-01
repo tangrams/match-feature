@@ -1,7 +1,7 @@
 
 var whiteList = ['any', 'not', 'all'];
 
-function matchFeatureObject(filter, context, parent) {
+function matchFeatureObject(filter, context) {
     var feature = context.feature;
 
     for (var key in filter) {
@@ -22,17 +22,13 @@ function matchFeatureObject(filter, context, parent) {
                 return matchFeatureObject(filter[key], context, key);
             }
         } else if (whiteList.indexOf(key) >= 0) {
-            if (parent !== undefined) {
-                switch (key) {
-                case 'not':
-                    return 'not';
-                case 'any':
-                    return 'any';
-                case 'all':
-                    return 'all';
-                }                
-            } else {
-                throw new Error();
+            switch (key) {
+            case 'not':
+                return !matchFeatureObject(filter.not, context);
+            case 'any':
+                return filter.any.some(function (x) { return matchFeatureObject(x, context); });
+            case 'all':
+                return filter.all.every(function (x) { return matchFeatureObject(x, context)});
             }
         } else {
             return false; // should we throw?

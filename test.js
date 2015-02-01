@@ -86,7 +86,7 @@ describe('.match(filter, context)', function () {
         });
     });
 
-    describe('when the filter property is an object', function () {
+    describe('when the filter property is a not expression', function () {
         var context = {
             feature: {
                 properties: {
@@ -96,19 +96,60 @@ describe('.match(filter, context)', function () {
         };
 
         describe('negation with single value', function () {
-            var subject = { kind: { not: 'highway'}};
 
             it('returns false when the value does match', function () {
+                var subject = { not: { kind: 'highway'}};
                 expect(match(subject)(context)).to.be.false();
+            });
+
+            it('returns true when the value does not match', function () {
+                var subject = { not: { kind: ' residential '}};
+                expect(match(subject)(context)).to.be.true();
             });
         });
 
         describe('negation with many values', function () {
-            var subject = { kind: { not: ['motorway', 'highway']}};
+            var subject = { not: { kind: ['motorway', 'highway']}};
+
+            it('returns false when either value does match', function () {
+                expect(match(subject)(context)).to.be.false();
+            });
+        });
+    });
+
+
+    describe('when the filter key is any', function () {
+        var context = {
+            feature: {
+                properties: {
+                    kind: 'motorway',
+                    id: 10
+                }
+            }
+        };
+
+        it('returns true if any of the values match', function () {
+            var subject = { any: [{ kind: 'motorway'}, { id: 10 }, {not: { kind: 'motorway'}}]};
+            expect(match(subject)(context)).to.be.true();
         });
 
     });
 
+    describe('when the filter key is all', function () {
+        var context = {
+            feature: {
+                properties: {
+                    kind: 'motorway',
+                    id: 10
+                }
+            }
+        };
+
+        it('only returns true if every clause matches', function () {
+            var subject = { all: [{ kind: 'motorway'}, { id: 10}]};
+            expect(match(subject)(context)).to.be.true();
+        });
+    });
 
     describe('when the filter value is a boolean', function () {
         var context = {
