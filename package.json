@@ -1,16 +1,19 @@
 {
+
     "name": "match-feature",
     "version": "0.0.1",
     "description": "",
     "main": "index.js",
     "scripts": {
         "test": "make test"
+
     },
-    "author": "",
-    "license": "GPL",
+    "author": "Mapzen",
+    "license": "MIT",
     "devDependencies": {
         "chai": "~1.10.0",
-        "mocha": "~2.1.0"
+        "mocha": "~2.1.0",
+        "istanbul": "~0.3.5",
+        "jshint": "~2.6.0"
     }
-
 }
