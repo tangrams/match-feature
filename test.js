@@ -1,9 +1,10 @@
 var expect = require('chai').expect,
-    match  = require('./index').match;
+    mf     = require('./index'),
+    match  = mf.match;
 
 describe('.match(filter, context)', function () {
     var context = {
-        'feature': {
+        feature: {
             properties: {
                 kind: 'highway',
                 highway: 'motorway',
@@ -12,9 +13,9 @@ describe('.match(filter, context)', function () {
                 b: null
             }
         },
-        '@zoom': 10,
-        '@meter-per-pixel': 100,
-        '@units-per-meter': 100,
+        zoom: 10,
+        meter_per_pixel: 100,
+        units_per_meter: 100,
     };
 
     
@@ -28,6 +29,33 @@ describe('.match(filter, context)', function () {
         });
     });
 
+
+    describe('filter on non feature values', function () {
+        var subject = { '@zoom': 10 };
+        describe('when the filter key has @ symbol', function () {
+            it('returns true when the context has a matching value', function () {
+                expect(match(subject)(context)).to.be.true();
+            });
+        });
+
+        describe('allow users to over ride the prefix', function () {
+            var tmp;
+            beforeEach(function () {
+                tmp = mf.nonFeaturePrefix;
+                mf.nonFeaturePrefix = 'scene.';
+            });
+            afterEach(function () {
+                mf.nonFeaturePrefix = tmp;
+            });
+
+            it('correctly filters with a custom prefix', function () {
+                var subject = { 'scene.zoom': 10 };
+                expect(match(subject)(context)).to.be.true();
+            });
+            
+        });
+    });
+    
     describe('simple filters', function () {
 
 
@@ -149,6 +177,26 @@ describe('.match(filter, context)', function () {
             var subject = { all: [{ kind: 'motorway'}, { id: 10}]};
             expect(match(subject)(context)).to.be.true();
         });
+
+        describe('sub queries', function () {
+            var context = {
+                feature: {
+                    properties: {
+                        kind: 'motorway',
+                        name: 'FDR',
+                        id: 10
+                    }
+                }
+            },
+                subject = { all: [{ all: [ { kind: 'motorway'}, { name: 'FDR'}]},
+                                  { any: [ { id: 10}, { type: 'linestring'}]}]};
+
+            it('returns true when all sub queries match', function () {
+                expect(match(subject)(context)).to.be.true();
+            });
+            
+        });
+
     });
 
     describe('when the filter value is a boolean', function () {

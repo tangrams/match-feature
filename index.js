@@ -1,17 +1,30 @@
 
-var whiteList = ['any', 'not', 'all'];
+exports.whiteList = ['any', 'not', 'all'];
+
+exports.nonFeaturePrefix = '@';
 
 function matchFeatureObject(filter, context) {
-    var feature = context.feature;
+    var feature = context.feature,
+        type,
+        property;
 
     for (var key in filter) {
-        var type = typeof filter[key];
+        type = typeof filter[key];
 
-        if (whiteList.indexOf(key) < 0) {
+        if (exports.whiteList.indexOf(key) < 0) {
+
             if (type === 'string' || type === 'number') {
-                if (!Object.is(filter[key], feature.properties[key])) {
+
+                if (key.lastIndexOf(exports.nonFeaturePrefix) === 0) {
+                    property = context[key.slice(exports.nonFeaturePrefix.length, key.length)];
+                } else {
+                    property = feature.properties[key];
+                }
+
+                if (!Object.is(filter[key], property)) {
                     return false;
-                }                
+                }
+
             } else if (type === 'boolean') {                
                 if ((filter[key] && !feature.properties[key]) || (!filter[key] && feature.properties[key])) {
                     return false;
@@ -21,17 +34,17 @@ function matchFeatureObject(filter, context) {
             } else if (type === 'object') {
                 return matchFeatureObject(filter[key], context, key);
             }
-        } else if (whiteList.indexOf(key) >= 0) {
+        } else if (exports.whiteList.indexOf(key) >= 0) {
             switch (key) {
             case 'not':
                 return !matchFeatureObject(filter.not, context);
             case 'any':
                 return filter.any.some(function (x) { return matchFeatureObject(x, context); });
             case 'all':
-                return filter.all.every(function (x) { return matchFeatureObject(x, context)});
+                return filter.all.every(function (x) { return matchFeatureObject(x, context); });
             }
         } else {
-            return false; // should we throw?
+            return false;
         }
     }
     return true;
