@@ -7,15 +7,17 @@ exports.nonFeaturePrefix = '@';
 function matchFeatureObject(filter, context) {
     var feature = context.feature,
         type,
+        value,
+        length,
         property;
 
     for (var key in filter) {
-        type = typeof filter[key];
+        value = filter[key];
+        type  = typeof value;
 
         if (exports.whiteList.indexOf(key) < 0) {
 
             if (type === 'string' || type === 'number') {
-
                 if (key.lastIndexOf(exports.nonFeaturePrefix) === 0) {
                     property = context[key.slice(exports.nonFeaturePrefix.length, key.length)];
                 } else {
@@ -27,22 +29,34 @@ function matchFeatureObject(filter, context) {
                 }
 
             } else if (type === 'boolean') {                
-                if ((filter[key] && !feature.properties[key]) || (!filter[key] && feature.properties[key])) {
+                if ((value && !feature.properties[key]) || (!value && feature.properties[key])) {
                     return false;
                 }
-            } else if (Array.isArray(filter[key])) {
-                return filter[key].indexOf(feature.properties[key]) >= 0;
+            } else if (Array.isArray(value)) {
+                return value.indexOf(feature.properties[key]) >= 0;
             } else if (type === 'object') {
-                return matchFeatureObject(filter[key], context, key);
+                return matchFeatureObject(value, context, key);
             }
         } else if (exports.whiteList.indexOf(key) >= 0) {
             switch (key) {
             case 'not':
                 return !matchFeatureObject(filter.not, context);
             case 'any':
-                return filter.any.some(function (x) { return matchFeatureObject(x, context); });
+                length = filter.any.length;
+                for (var i = 0; i < length; i += 1) {
+                    if (matchFeatureObject(filter.any[i], context)) {
+                        return true;
+                    }
+                }
+                return false;
             case 'all':
-                return filter.all.every(function (x) { return matchFeatureObject(x, context); });
+                length = filter.all.length;
+                for (var x = 0; x < length; x += 1) {
+                    if (!matchFeatureObject(filter.all[x], context)) {
+                        return false;
+                    }
+                }
+                return true;
             }
         } else {
             return false;
@@ -59,7 +73,7 @@ exports.buildFilter = function (filter) {
         return matchFeatureObject.bind(null, filter);
     case '[object Null]':
     case '[object Undefined]':
-        return function () { return true; };
+    /* falls through */
     default:
         return function () { return true; };
     }
