@@ -155,7 +155,7 @@ function parseFilter(filter) {
         }
     });
 
-    return keys.length === 0 ? null : filterAST;
+    return keys.length === 0 ? ['true'] : filterAST;
 }
 
 function filterToString(filterAST) {

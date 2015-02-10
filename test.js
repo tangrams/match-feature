@@ -26,6 +26,14 @@ describe('.match(filter, context)', function () {
                 expect(match(null)(context)).to.be.true();
             });
         });
+
+        describe('when match is given an empty object', function () {
+
+            it('returns true', function () {
+                expect(match({})(context)).to.be.true();
+            });
+
+        });
     });
 
     describe('filter on non feature values', function () {
@@ -88,6 +96,32 @@ describe('.match(filter, context)', function () {
             });
         });
     });
+
+    describe('when the filter is a range', function () {
+        var context = {
+            feature: {
+                properties: {
+                    a: 10,
+                    b: 10
+                }
+            }
+        };
+
+        it('returns true when the property is within that range', function () {
+            expect(match({a: {max: 11, min: 9}})(context)).to.be.true();
+        });
+
+        it('returns false when the property is outside that range', function () {
+            expect(match({b: {max: 5, min: 1}})(context)).to.be.false();
+        });
+
+        describe('when there is just a min value', function () {
+            it('returns when that value is above the min value', function () {
+                expect(match({b: {min: 9}})(context)).to.be.true();
+            });
+        });
+    });
+
     describe('when the filter property is a not expression', function () {
         var context = {
             feature: {
@@ -127,6 +161,7 @@ describe('.match(filter, context)', function () {
             expect(match(subject)(context)).to.be.true();
         });
     });
+
     describe('when the filter key is all', function () {
         var context = {
             feature: {
@@ -157,6 +192,7 @@ describe('.match(filter, context)', function () {
             });
         });
     });
+
     describe('when the filter value is a boolean', function () {
         var context = {
             feature: {
