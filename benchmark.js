@@ -1,6 +1,6 @@
 'use strict';
 
-var expect = require('chai').expect,
+var
     ff     = require('feature-filter'),
     match  = require('./index').match;
 
