@@ -18,7 +18,7 @@ function maybeQuote(value) {
 function lookUp(key) {
 
     if (key.lastIndexOf('@') === 0) {
-        return 'context.' + key.slice(1);
+        return 'context.' + key.substring(1);
     }
     return 'context.feature.properties.' + key;
 }
@@ -54,7 +54,7 @@ function propertyOr(key, values) {
         key: key,
         values: values.map(function (x) { return propertyEqual(key, x); }),
         toString: function () {
-            return this.values.map(toString).join(' || ');
+            return '(' + this.values.map(toString).join(' || ') + ')';
         }
     };
 }
@@ -75,7 +75,7 @@ function any(_, values) {
         type: 'any',
         values: values.map(parseFilter),
         toString: function () {
-            return this.values.filter(notNull).map(toString).join(' || ');
+            return '(' + this.values.filter(notNull).map(toString).join(' || ') + ')';
         }
     };
 }
@@ -85,7 +85,7 @@ function all(_, values) {
         type: 'all',
         values: values.filter(notNull).map(parseFilter),
         toString: function () {
-            return this.values.filter(notNull).map(toString).join(' && ');
+            return '(' + this.values.filter(notNull).map(toString).join(' && ') + ')';
         }
     };
 }
@@ -108,8 +108,9 @@ function rangeMatch(key, values) {
         values: values,
         toString: function () {
             var expressions = [];
+
             if (this.values.max) {
-                expressions.push('' + lookUp(key) + ' <= ' + this.values.max);
+                expressions.push('' + lookUp(key) + ' < ' + this.values.max);
             }
 
             if (this.values.min) {
@@ -159,7 +160,7 @@ function parseFilter(filter) {
 }
 
 function filterToString(filterAST) {
-    return '(' + filterAST.filter(notNull).join(' || ') + ')';
+    return '(' + filterAST.filter(notNull).join(' && ') + ')';
 }
 
 function match(filter) {
