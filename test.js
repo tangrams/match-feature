@@ -1,57 +1,6 @@
 'use strict';
 var expect         = require('chai').expect,
-    parseFilter    = require('./index').parseFilter,
-    filterToString = require('./index').filterToString,
     match          = require('./index').match;
-
-
-var simpleQuery   = { kind: 'motorway' },
-
-    twoClause     = { kind: 'motorway', name: 'FDR'},
-
-    threeClause   = { kind: 'motorway', name: 'FDR', id: 10 },
-
-    not              = { not: { any: [ {kind: 'motorway'}, { id: 10 }]}},
-    rangeMatch       = { zoom: { max: 10, min: 2 }},
-    differentClause  = { kind: 'motorway', name: true },
-    nullValue        = { kind: null },
-    orPropertyClause = { kind: ['motorway', 'side-street']},
-    
-    uberQuery = { any: [
-        { kind: 'motorway' },
-        { '@zoom': 10},
-        { name: true },
-        {},
-        { not: { kind: 'motorway' }},
-        { all: [{ id: 10 }, { name: 'FDR' }, { highway: 'yes' }]},
-        { '@zoom': { min: 14, max: 18 } }]};
-
-//console.log(match(simpleQuery));
-//console.log(match(twoClause));
-//console.log(match(threeClause));
-// console.log(match(differentClause));
-//console.log(match(not));
-//console.log(match(rangeMatch));
-//console.log(match(orPropertyClause));
-//console.log(match(uberQuery));
-
-describe.skip('.parseFilter()', function () {
-    describe('when given a filter', function () {
-
-        it('should generate a representation of that filter', function () {
-            expect(parseFilter(simpleQuery)).to.be.equal({});
-            expect(parseFilter(twoClause)).to.be.equal({});
-            expect(parseFilter(threeClause)).to.be.equal({});
-            expect(parseFilter(differentClause)).to.be.equal({});
-            expect(parseFilter(orPropertyClause)).to.be.equal({});
-            expect(parseFilter(not)).to.be.equal({});
-            expect(parseFilter(rangeMatch)).to.be.equal({});
-        });
-
-    });
-
-});
-
 
 
 describe('.match(filter, context)', function () {
@@ -213,7 +162,7 @@ describe('.match(filter, context)', function () {
             feature: {
                 properties: {
                     a: {},
-                    b: '',
+                    b: undefined,
                     c: [],
                     d: true,
                     e: 0
@@ -237,7 +186,7 @@ describe('.match(filter, context)', function () {
                 expect(match({d: true})(context)).to.be.true();
             });
             it('{e: false}', function () {
-                expect(match({e: false})(context)).to.be.true();
+                expect(match({e: true})(context)).to.be.true();
             });
         });
     });
