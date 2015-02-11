@@ -5,7 +5,7 @@ var whiteList = ['not', 'any', 'all'];
 
 function notNull(x) { return x != null; }
 function toString(x) { return x.toString(); }
-
+function wrap(x) { return '(' + x + ')';}
 function maybeQuote(value) {
 
     if (typeof value === 'string') {
@@ -41,7 +41,7 @@ function propertyEqual(key, value) {
         key: key,
         value: value,
         toString: function () {
-            return '(' + maybeQuote(this.value) + ' ' + this.opt + ' ' + lookUp(key) + ')';
+            return wrap(maybeQuote(this.value) + ' ' + this.opt + ' ' + lookUp(key));
         }
         
     };
@@ -70,12 +70,22 @@ function notProperty(key, value) {
     };
 }
 
+function printNested(values) {
+    return wrap(values.filter(notNull).map(function (x) {
+        if (Array.isArray(x)) {
+            return wrap(x.join(' && '));
+        }
+        return x.toString();
+    }).join(' || '));
+
+}
+
 function any(_, values) {
     return {
         type: 'any',
         values: values.map(parseFilter),
         toString: function () {
-            return '(' + this.values.filter(notNull).map(toString).join(' || ') + ')';
+            return printNested(this.values);
         }
     };
 }
@@ -85,7 +95,7 @@ function all(_, values) {
         type: 'all',
         values: values.filter(notNull).map(parseFilter),
         toString: function () {
-            return '(' + this.values.filter(notNull).map(toString).join(' && ') + ')';
+            return printNested(this.values);
         }
     };
 }
@@ -160,7 +170,7 @@ function parseFilter(filter) {
 }
 
 function filterToString(filterAST) {
-    return '(' + filterAST.filter(notNull).join(' && ') + ')';
+    return '(' + filterAST.join(' && ') + ')';
 }
 
 function match(filter) {

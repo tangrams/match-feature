@@ -1,9 +1,11 @@
 'use strict';
-var expect         = require('chai').expect,
-    match          = require('./index').match;
+var expect         = require('chai').expect;
+
 
 
 describe('.match(filter, context)', function () {
+    var match          = require('./index').match;
+
     var context = {
         feature: {
             properties: {
