@@ -3,26 +3,23 @@
 var whiteList = ['not', 'any', 'all'];
 
 
-function notNull(x) { return x != null; }
+function notNull(x)  { return x != null; }
 function toString(x) { return x.toString(); }
-function wrap(x) { return '(' + x + ')';}
-function maybeQuote(value) {
+function wrap(x)     { return '(' + x + ')';}
 
+function maybeQuote(value) {
     if (typeof value === 'string') {
         return '"' + value + '"';
     }
-
     return value;
 }
 
 function lookUp(key) {
-
     if (key.lastIndexOf('@') === 0) {
         return 'context.' + key.substring(1);
     }
     return 'context.feature.properties.' + key;
 }
-
 
 function nullValue(key, value) {
     return {
@@ -48,13 +45,12 @@ function propertyEqual(key, value) {
 }
 
 function propertyOr(key, values) {
-
     return {
         type: 'propertyOr',
         key: key,
         values: values.map(function (x) { return propertyEqual(key, x); }),
         toString: function () {
-            return '(' + this.values.map(toString).join(' || ') + ')';
+            return wrap(this.values.map(toString).join(' || '));
         }
     };
 }
@@ -65,19 +61,15 @@ function notProperty(key, value) {
         key: key,
         value: parseFilter(value),
         toString: function () {
-            return '!(' + this.value.toString() + ')';
+            return '!' + wrap(this.value.toString());
         }
     };
 }
 
-function printNested(values) {
+function printNested(values, joiner) {
     return wrap(values.filter(notNull).map(function (x) {
-        if (Array.isArray(x)) {
-            return wrap(x.join(' && '));
-        }
-        return x.toString();
-    }).join(' || '));
-
+        return wrap(x.join(' && '));
+    }).join(' ' + joiner + ' '));
 }
 
 function any(_, values) {
@@ -85,7 +77,7 @@ function any(_, values) {
         type: 'any',
         values: values.map(parseFilter),
         toString: function () {
-            return printNested(this.values);
+            return printNested(this.values, '||');
         }
     };
 }
@@ -95,7 +87,7 @@ function all(_, values) {
         type: 'all',
         values: values.filter(notNull).map(parseFilter),
         toString: function () {
-            return printNested(this.values);
+            return printNested(this.values, '&&');
         }
     };
 }
@@ -106,7 +98,7 @@ function propertyMatchesBoolean(key, value) {
         key: key,
         value: value,
         toString: function () {
-            return '(' + lookUp(this.key) + (this.value ? ' != ' : ' == ')  + 'null)';
+            return wrap(lookUp(this.key) + (this.value ? ' != ' : ' == ')  + 'null');
         }
     };
 }
@@ -127,7 +119,7 @@ function rangeMatch(key, values) {
                 expressions.push('' + lookUp(key) + ' >= ' + this.values.min);
             }
 
-            return '(' + expressions.join(' && ') + ')';
+            return wrap(expressions.join(' && '));
         }
     };
 }
@@ -170,7 +162,7 @@ function parseFilter(filter) {
 }
 
 function filterToString(filterAST) {
-    return '(' + filterAST.join(' && ') + ')';
+    return wrap(filterAST.join(' && '));
 }
 
 function match(filter) {
@@ -178,7 +170,6 @@ function match(filter) {
     // jshint evil: true
     return new Function('context', 'return ' + filterToString(parseFilter(filter)) + ';');
 }
-
 
 module.exports = {
     match: match,
