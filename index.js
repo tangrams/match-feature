@@ -1,6 +1,6 @@
 'use strict';
 
-var whiteList = ['not', 'any', 'all'];
+var whiteList = ['not', 'any', 'all', 'none'];
 
 
 function notNull(x)  { return x != null; }
@@ -15,7 +15,7 @@ function maybeQuote(value) {
 }
 
 function lookUp(key) {
-    if (key.lastIndexOf('@') === 0) {
+    if (key.lastIndexOf('$') === 0) {
         return 'context.' + key.substring(1);
     }
     return 'context.feature.properties.' + key;
@@ -40,7 +40,6 @@ function propertyEqual(key, value) {
         toString: function () {
             return wrap(maybeQuote(this.value) + ' ' + this.opt + ' ' + lookUp(key));
         }
-        
     };
 }
 
@@ -55,13 +54,23 @@ function propertyOr(key, values) {
     };
 }
 
-function notProperty(key, value) {
+function not(key, value) {
     return {
         type: 'notProperty',
         key: key,
         value: parseFilter(value),
         toString: function () {
             return '!' + wrap(this.value.toString());
+        }
+    };
+}
+
+function none(key, values) {
+    return {
+        type: 'none',
+        values: any(null, values),
+        toString: function () {
+            return '!' + wrap(this.values.toString());
         }
     };
 }
@@ -141,13 +150,19 @@ function parseFilter(filter) {
         } else if (whiteList.indexOf(key) >= 0) {
             switch (key) {
             case 'not':
-                filterAST.push(notProperty(key, value));
+                filterAST.push(not(key, value));
                 break;
             case 'any':
                 filterAST.push(any(key, value));
                 break;
             case 'all':
                 filterAST.push(all(key, value));
+                break;
+            case 'none':
+                filterAST.push(none(key, value));
+                break;
+            default:
+                throw new Error('Unhandled WhiteListed property: ' + key);
             }
         } else if (Array.isArray(value)) {
             filterAST.push(propertyOr(key, value));
@@ -155,6 +170,8 @@ function parseFilter(filter) {
             if (value.max || value.min) {
                 filterAST.push(rangeMatch(key, value));
             }
+        } else {
+            throw new Error('Unknown Query sytnax: ' + value);
         }
     });
 

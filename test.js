@@ -39,8 +39,8 @@ describe('.match(filter, context)', function () {
     });
 
     describe('filter on non feature values', function () {
-        var subject = { '@zoom': 10 };
-        describe('when the filter key has @ symbol', function () {
+        var subject = { '$zoom': 10 };
+        describe('when the filter key has $ symbol', function () {
             it('returns true when the context has a matching value', function () {
                 expect(match(subject)(context)).to.be.true();
             });
@@ -71,7 +71,6 @@ describe('.match(filter, context)', function () {
 
         describe('when the value in the filter is null and the property is null', function () {
             it('returns true', function () {
-                
                 expect(match({b: null})(context)).to.be.true();
             });
         });
@@ -128,13 +127,38 @@ describe('.match(filter, context)', function () {
                 expect(match(subject)(context)).to.be.true();
             });
         });
+
         describe('negation with many values', function () {
             var subject = { not: { kind: ['motorway', 'highway']}};
             it('returns false when either value does match', function () {
                 expect(match(subject)(context)).to.be.false();
             });
         });
+
     });
+
+    describe('`none`', function () {
+        var subject = { none: [{ id: 'a' }, { b: 'not-stuff' }]};
+
+        describe('when given a non matching context', function () {
+            var context = makeContext({ id: '10', b: 'stuff'});
+
+            it('return true', function () {
+                expect(match(subject)(context)).to.be.true();
+            });
+
+        });
+
+        describe('when given a matching context', function () {
+            var context = makeContext({ id: 'a', b: 'nont-stuff'});
+            it('returns false', function () {
+                expect(match(subject)(context)).to.be.false();
+            });
+
+        });
+
+    });
+
     describe('`any`', function () {
         var context = makeContext({
             kind: 'motorway',
@@ -202,7 +226,7 @@ describe('.match(filter, context)', function () {
             var subject = { kind: 'minor_road',
                             any: [ { aeroway: 'runway' },
                                    { aeroway: 'taxiway',
-                                     '@zoom': { min: 15 } } ] };
+                                     '$zoom': { min: 15 } } ] };
 
             it('reutrns true', function () {
                 expect(match(subject)(makeContext({
@@ -211,7 +235,7 @@ describe('.match(filter, context)', function () {
                 }))).to.be.true();
             });
 
-            it('returns false', function () {                
+            it('returns false', function () {
                 expect(match(subject)(makeContext({
                     kind: 'minor_road',
                     aeroway: 'taxiway'
