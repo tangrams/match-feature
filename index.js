@@ -134,9 +134,16 @@ function rangeMatch(key, values) {
 }
 
 function parseFilter(filter) {
-    var filterAST = [],
-        keys      = Object.keys(filter);
+    var filterAST = [];
 
+    // Function filter
+    if (typeof filter === 'function') {
+        filterAST.push(wrap(filter.toString() + '(context)'));
+        return filterAST;
+    }
+
+    // Object filter
+    var keys = Object.keys(filter);
     keys.forEach(function (key, idx) {
 
         var value = filter[key],
