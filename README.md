@@ -29,7 +29,7 @@ match({ kind: 'motorway', name: 'FDR', id: 10 })(context) // true
 
 match({ not: { any: [ {kind: 'motorway'}, { id: 10 }]}})(context)
 
-match({ zoom: { max: 10, min: 2 }})(context) // true
+match({ $zoom: { max: 10, min: 2 }})(context) // true
 
 match({ kind: 'motorway', name: true })(context) // true
 
@@ -37,10 +37,10 @@ match({ kind: ['motorway', 'side-street']})(context) // true
 
 match({ any: [
         { kind: 'motorway' },
-        { '@zoom': 10},
+        { $zoom: 10},
         { name: true },
         { not: { kind: 'motorway' }},
         { all: [{ id: 10 }, { name: 'FDR' }, { highway: 'yes' }]},
-        { '@zoom': { min: 14, max: 18 } }]})(context)
+        { $zoom: { min: 14, max: 18 } }]})(context)
 
 ```
