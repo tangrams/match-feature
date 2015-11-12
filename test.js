@@ -178,6 +178,11 @@ describe('.match(filter, context)', function () {
                 .to.be.false();
         });
 
+        it('array filter is treated as implicit `any`', function () {
+            expect(match([ { kind: 'motorway'}, { id: 10 }, { not: { kind: 'motorway'} } ])(context))
+                .to.be.true();
+        });
+
         describe('nested queryies', function () {
 
             it('returns true when at least one of filters match', function () {
