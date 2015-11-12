@@ -141,8 +141,13 @@ function parseFilter(filter) {
         filterAST.push(wrap(filter.toString() + '(context)'));
         return filterAST;
     }
+    // Array filter, implicit 'any'
+    else if (Array.isArray(filter)) {
+        filterAST.push(any(null, filter));
+        return filterAST;
+    }
 
-    // Object filter
+    // Object filter, e.g. implicit 'all'
     var keys = Object.keys(filter);
     keys.forEach(function (key, idx) {
 
