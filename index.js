@@ -1,10 +1,6 @@
 'use strict';
 
-var whiteList = ['not', 'any', 'all', 'none'];
-
-
 function notNull(x)  { return x != null; }
-function toString(x) { return x.toString(); }
 function wrap(x)     { return '(' + x + ')';}
 
 function maybeQuote(value) {
@@ -15,64 +11,30 @@ function maybeQuote(value) {
 }
 
 function lookUp(key) {
-    if (key.lastIndexOf('$') === 0) {
+    if (key[0] === '$') {
         return 'context.' + key.substring(1);
     }
     return 'context.feature.properties.' + key;
 }
 
 function nullValue(key, value) {
-    return {
-        type: 'nullValue',
-        key: key,
-        toString: function () {
-            return ' true ';
-        }
-    };
+    return ' true ';
 }
 
 function propertyEqual(key, value) {
-    return {
-        type: 'propertyEqual',
-        opt: '===' ,
-        key: key,
-        value: value,
-        toString: function () {
-            return wrap(maybeQuote(this.value) + ' ' + this.opt + ' ' + lookUp(key));
-        }
-    };
+    return wrap(maybeQuote(value) + ' === ' + lookUp(key));
 }
 
 function propertyOr(key, values) {
-    return {
-        type: 'propertyOr',
-        key: key,
-        values: values.map(function (x) { return propertyEqual(key, x); }),
-        toString: function () {
-            return wrap(this.values.map(toString).join(' || '));
-        }
-    };
+    return values.map(function (x) { return propertyEqual(key, x); }).join(' || ');
 }
 
 function not(key, value) {
-    return {
-        type: 'notProperty',
-        key: key,
-        value: parseFilter(value),
-        toString: function () {
-            return '!' + wrap(this.value.toString());
-        }
-    };
+    return '!' + wrap(parseFilter(value));
 }
 
 function none(key, values) {
-    return {
-        type: 'none',
-        values: any(null, values),
-        toString: function () {
-            return '!' + wrap(this.values.toString());
-        }
-    };
+    return '!' + wrap(any(null, values));
 }
 
 function printNested(values, joiner) {
@@ -82,55 +44,29 @@ function printNested(values, joiner) {
 }
 
 function any(_, values) {
-    return {
-        type: 'any',
-        values: values.map(parseFilter),
-        toString: function () {
-            return printNested(this.values, '||');
-        }
-    };
+    return printNested(values.map(parseFilter), '||');
 }
 
 function all(_, values) {
-    return {
-        type: 'all',
-        values: values.filter(notNull).map(parseFilter),
-        toString: function () {
-            return printNested(this.values, '&&');
-        }
-    };
+    return printNested(values.filter(notNull).map(parseFilter), '&&');
 }
 
 function propertyMatchesBoolean(key, value) {
-    return {
-        type: 'propertyMatchesBoolean',
-        key: key,
-        value: value,
-        toString: function () {
-            return wrap(lookUp(this.key) + (this.value ? ' != ' : ' == ')  + 'null');
-        }
-    };
+    return wrap(lookUp(key) + (value ? ' != ' : ' == ')  + 'null');
 }
 
 function rangeMatch(key, values) {
-    return {
-        type: 'rangeMatch',
-        key: key,
-        values: values,
-        toString: function () {
-            var expressions = [];
+    var expressions = [];
 
-            if (this.values.max) {
-                expressions.push('' + lookUp(key) + ' < ' + this.values.max);
-            }
+    if (values.max) {
+        expressions.push('' + lookUp(key) + ' < ' + values.max);
+    }
 
-            if (this.values.min) {
-                expressions.push('' + lookUp(key) + ' >= ' + this.values.min);
-            }
+    if (values.min) {
+        expressions.push('' + lookUp(key) + ' >= ' + values.min);
+    }
 
-            return wrap(expressions.join(' && '));
-        }
-    };
+    return wrap(expressions.join(' && '));
 }
 
 function parseFilter(filter) {
@@ -149,7 +85,8 @@ function parseFilter(filter) {
 
     // Object filter, e.g. implicit 'all'
     var keys = Object.keys(filter);
-    keys.forEach(function (key, idx) {
+    for (var k=0; k < keys.length; k++) {
+        var key = keys[k];
 
         var value = filter[key],
             type  = typeof value;
@@ -159,23 +96,14 @@ function parseFilter(filter) {
             filterAST.push(propertyMatchesBoolean(key, value));
         } else if (value == null) {
             filterAST.push(nullValue(key, value));
-        } else if (whiteList.indexOf(key) >= 0) {
-            switch (key) {
-            case 'not':
-                filterAST.push(not(key, value));
-                break;
-            case 'any':
-                filterAST.push(any(key, value));
-                break;
-            case 'all':
-                filterAST.push(all(key, value));
-                break;
-            case 'none':
-                filterAST.push(none(key, value));
-                break;
-            default:
-                throw new Error('Unhandled WhiteListed property: ' + key);
-            }
+        } else if (key === 'not') {
+            filterAST.push(not(key, value));
+        } else if (key === 'any') {
+            filterAST.push(any(key, value));
+        } else if (key === 'all') {
+            filterAST.push(all(key, value));
+        } else if (key === 'none') {
+            filterAST.push(none(key, value));
         } else if (Array.isArray(value)) {
             filterAST.push(propertyOr(key, value));
         } else if (type === 'object' && value != null) {
@@ -185,7 +113,7 @@ function parseFilter(filter) {
         } else {
             throw new Error('Unknown Query sytnax: ' + value);
         }
-    });
+    }
 
     return keys.length === 0 ? ['true'] : filterAST;
 }
