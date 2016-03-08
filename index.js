@@ -26,7 +26,7 @@ function propertyEqual(key, value) {
 }
 
 function propertyOr(key, values) {
-    return values.map(function (x) { return propertyEqual(key, x); }).join(' || ');
+    return wrap(values.map(function (x) { return propertyEqual(key, x); }).join(' || '));
 }
 
 function not(key, value) {
