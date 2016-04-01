@@ -36,11 +36,11 @@ function printNested(values, joiner) {
 }
 
 function any(_, values) {
-    return printNested(values.map(parseFilter), '||');
+    return (values && values.length > 0) ? printNested(values.map(parseFilter), '||') : 'true';
 }
 
 function all(_, values) {
-    return printNested(values.filter(notNull).map(parseFilter), '&&');
+    return (values && values.length > 0) ? printNested(values.map(parseFilter), '&&') : 'true';
 }
 
 function not(key, value) {
@@ -74,13 +74,15 @@ function parseFilter(filter) {
 
     // Function filter
     if (typeof filter === 'function') {
-        filterAST.push(wrap(filter.toString() + '(context)'));
-        return filterAST;
+        return [wrap(filter.toString() + '(context)')];
     }
     // Array filter, implicit 'any'
     else if (Array.isArray(filter)) {
-        filterAST.push(any(null, filter));
-        return filterAST;
+        return [any(null, filter)];
+    }
+    // Null filter object
+    else if (filter == null) {
+        return ['true'];
     }
 
     // Object filter, e.g. implicit 'all'
@@ -94,8 +96,6 @@ function parseFilter(filter) {
             filterAST.push(propertyEqual(key, value));
         } else if (type === 'boolean') {
             filterAST.push(propertyMatchesBoolean(key, value));
-        } else if (value == null) {
-            filterAST.push(nullValue(key, value));
         } else if (key === 'not') {
             filterAST.push(not(key, value));
         } else if (key === 'any') {
@@ -110,6 +110,8 @@ function parseFilter(filter) {
             if (value.max || value.min) {
                 filterAST.push(rangeMatch(key, value));
             }
+        } else if (value == null) {
+            filterAST.push(nullValue(key, value));
         } else {
             throw new Error('Unknown Query sytnax: ' + value);
         }
