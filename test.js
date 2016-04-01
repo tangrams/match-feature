@@ -135,6 +135,31 @@ describe('.match(filter, context)', function () {
             });
         });
 
+        describe('negation with multiple properties', function () {
+            var subject = { not: { highway: 'service', kind: ['rail', 'ferry'] } };
+
+            it('returns true when no properties match', function () {
+                var context = makeContext({ a: 'b'});
+                expect(match(subject)(context)).to.be.true();
+            });
+
+            it('returns true when only one property does not match', function () {
+                var context = makeContext({ kind: 'ferry' });
+                expect(match(subject)(context)).to.be.true();
+            });
+
+            it('returns false when all properties do not match', function () {
+                var context = makeContext({ highway: 'service', kind: 'ferry' });
+                expect(match(subject)(context)).to.be.false();
+            });
+        });
+
+        it('handles empty filter inputs', function () {
+            expect(match({ not: null })()).to.be.false();
+            expect(match({ not: {} })()).to.be.false();
+            expect(match({ not: [] })()).to.be.false();
+        });
+
     });
 
     describe('`none`', function () {
@@ -155,6 +180,12 @@ describe('.match(filter, context)', function () {
                 expect(match(subject)(context)).to.be.false();
             });
 
+        });
+
+        it('handles empty filter inputs', function () {
+            expect(match({ none: null })()).to.be.false();
+            expect(match({ none: {} })()).to.be.false();
+            expect(match({ none: [] })()).to.be.false();
         });
 
     });
@@ -197,6 +228,13 @@ describe('.match(filter, context)', function () {
                     to.be.false();
             });
         });
+
+        it('handles empty filter inputs', function () {
+            expect(match({ any: null })()).to.be.true();
+            expect(match({ any: {} })()).to.be.true();
+            expect(match({ any: [] })()).to.be.true();
+        });
+
     });
 
     describe('`all`', function () {
@@ -256,6 +294,11 @@ describe('.match(filter, context)', function () {
 
         });
 
+        it('handles empty filter inputs', function () {
+            expect(match({ all: null })()).to.be.true();
+            expect(match({ all: {} })()).to.be.true();
+            expect(match({ all: [] })()).to.be.true();
+        });
 
     });
 
