@@ -29,14 +29,6 @@ function propertyOr(key, values) {
     return wrap(values.map(function (x) { return propertyEqual(key, x); }).join(' || '));
 }
 
-function not(key, value) {
-    return '!' + wrap(parseFilter(value));
-}
-
-function none(key, values) {
-    return '!' + wrap(any(null, values));
-}
-
 function printNested(values, joiner) {
     return wrap(values.filter(notNull).map(function (x) {
         return wrap(x.join(' && '));
@@ -49,6 +41,14 @@ function any(_, values) {
 
 function all(_, values) {
     return printNested(values.filter(notNull).map(parseFilter), '&&');
+}
+
+function not(key, value) {
+    return '!' + wrap(parseFilter(value).join(' && '));
+}
+
+function none(key, values) {
+    return '!' + wrap(any(null, values));
 }
 
 function propertyMatchesBoolean(key, value) {
