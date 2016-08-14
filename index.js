@@ -35,41 +35,44 @@ function printNested(values, joiner) {
     }).join(' ' + joiner + ' '));
 }
 
-function any(_, values) {
-    return (values && values.length > 0) ? printNested(values.map(parseFilter), '||') : 'true';
+function any(_, values, options) {
+    return (values && values.length > 0) ? printNested(values.map(v => parseFilter(v, options)), '||') : 'true';
 }
 
-function all(_, values) {
-    return (values && values.length > 0) ? printNested(values.map(parseFilter), '&&') : 'true';
+function all(_, values, options) {
+    return (values && values.length > 0) ? printNested(values.map(v => parseFilter(v, options)), '&&') : 'true';
 }
 
-function not(key, value) {
-    return '!' + wrap(parseFilter(value).join(' && '));
+function not(key, value, options) {
+    return '!' + wrap(parseFilter(value, options).join(' && '));
 }
 
-function none(key, values) {
-    return '!' + wrap(any(null, values));
+function none(key, values, options) {
+    return '!' + wrap(any(null, values, options));
 }
 
 function propertyMatchesBoolean(key, value) {
     return wrap(lookUp(key) + (value ? ' != ' : ' == ')  + 'null');
 }
 
-function rangeMatch(key, values) {
+function rangeMatch(key, values, options) {
     var expressions = [];
+    var transform = options && (typeof options.rangeTransform === 'function') && options.rangeTransform;
 
     if (values.max) {
-        expressions.push('' + lookUp(key) + ' < ' + values.max);
+        var max = transform ? transform(values.max) : values.max;
+        expressions.push('' + lookUp(key) + ' < ' + max);
     }
 
     if (values.min) {
-        expressions.push('' + lookUp(key) + ' >= ' + values.min);
+        var min = transform ? min = transform(values.min) : values.min;
+        expressions.push('' + lookUp(key) + ' >= ' + min);
     }
 
     return wrap(expressions.join(' && '));
 }
 
-function parseFilter(filter) {
+function parseFilter(filter, options) {
     var filterAST = [];
 
     // Function filter
@@ -78,7 +81,7 @@ function parseFilter(filter) {
     }
     // Array filter, implicit 'any'
     else if (Array.isArray(filter)) {
-        return [any(null, filter)];
+        return [any(null, filter, options)];
     }
     // Null filter object
     else if (filter == null) {
@@ -97,18 +100,18 @@ function parseFilter(filter) {
         } else if (type === 'boolean') {
             filterAST.push(propertyMatchesBoolean(key, value));
         } else if (key === 'not') {
-            filterAST.push(not(key, value));
+            filterAST.push(not(key, value, options));
         } else if (key === 'any') {
-            filterAST.push(any(key, value));
+            filterAST.push(any(key, value, options));
         } else if (key === 'all') {
-            filterAST.push(all(key, value));
+            filterAST.push(all(key, value, options));
         } else if (key === 'none') {
-            filterAST.push(none(key, value));
+            filterAST.push(none(key, value, options));
         } else if (Array.isArray(value)) {
             filterAST.push(propertyOr(key, value));
         } else if (type === 'object' && value != null) {
             if (value.max || value.min) {
-                filterAST.push(rangeMatch(key, value));
+                filterAST.push(rangeMatch(key, value, options));
             }
         } else if (value == null) {
             filterAST.push(nullValue(key, value));
@@ -124,10 +127,10 @@ function filterToString(filterAST) {
     return wrap(filterAST.join(' && '));
 }
 
-function match(filter) {
+function match(filter, options) {
     if (filter == null) { return function () { return true; }; }
     // jshint evil: true
-    return new Function('context', 'return ' + filterToString(parseFilter(filter)) + ';');
+    return new Function('context', 'return ' + filterToString(parseFilter(filter, options)) + ';');
 }
 
 module.exports = {
