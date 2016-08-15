@@ -36,11 +36,11 @@ function printNested(values, joiner) {
 }
 
 function any(_, values, options) {
-    return (values && values.length > 0) ? printNested(values.map(v => parseFilter(v, options)), '||') : 'true';
+    return (values && values.length > 0) ? printNested(values.map(function(v) { return parseFilter(v, options) }), '||') : 'true';
 }
 
 function all(_, values, options) {
-    return (values && values.length > 0) ? printNested(values.map(v => parseFilter(v, options)), '&&') : 'true';
+    return (values && values.length > 0) ? printNested(values.map(function(v) { return parseFilter(v, options) }), '&&') : 'true';
 }
 
 function not(key, value, options) {
