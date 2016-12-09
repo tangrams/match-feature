@@ -12,9 +12,9 @@ function maybeQuote(value) {
 
 function lookUp(key) {
     if (key[0] === '$') {
-        return 'context.' + key.substring(1);
+        return 'context[\'' + key.substring(1) + '\']';
     }
-    return 'context.feature.properties.' + key;
+    return 'context.feature.properties[\'' + key + '\']';
 }
 
 function nullValue(key, value) {
